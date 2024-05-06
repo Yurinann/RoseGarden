@@ -19,19 +19,21 @@ public class MySQLConnector implements DatabaseConnector {
         this.openConnections = new AtomicInteger();
         this.lock = new Object();
 
+        String driverName = "com.mysql.cj.jdbc.Driver";
+        try { // Try to use the new driver
+            Class.forName(driverName);
+        } catch (ClassNotFoundException e1) {
+            try { // Otherwise fallback to the old one or just ignore if it still can't be found
+                Class.forName(driverName = "com.mysql.cj.jdbc.Driver");
+            } catch (ClassNotFoundException ignored) { }
+        }
+
         HikariConfig config = new HikariConfig();
+        config.setDriverClassName(driverName);
         config.setJdbcUrl("jdbc:mysql://" + hostname + ":" + port + "/" + database + "?useSSL=" + useSSL + "&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8");
         config.setUsername(username);
         config.setPassword(password);
         config.setMaximumPoolSize(poolSize);
-
-        try { // Try to use the new driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e1) {
-            try { // Otherwise fallback to the old one or just ignore if it still can't be found
-                Class.forName("com.mysql.jdbc.Driver");
-            } catch (ClassNotFoundException ignored) { }
-        }
 
         try {
             this.hikari = new HikariDataSource(config);
